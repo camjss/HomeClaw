@@ -630,6 +630,26 @@ verify_archive_contents() {
     || die "homeclaw-cli is not sandboxed; App Store Connect rejects the upload (error 90296)."
   info "HomeKit entitlement present; homeclaw-cli sandboxed"
 
+  # Build 197 linked a strong import of a Swift runtime symbol that only
+  # macOS 27 exports; dyld killed it at launch on every macOS 26 Mac (#149),
+  # and nothing on a macOS 27 build machine notices. Weak imports are fine.
+  # nm output is captured, not piped into grep -q: under pipefail an early
+  # grep exit SIGPIPEs nm and the match would read as a miss.
+  local runtime_only=(_swift_initBorrow) bin sym nm_out imports bad=()
+  while IFS= read -r bin; do
+    [[ "$(file -b "$bin")" == *Mach-O* ]] || continue
+    # A binary nm cannot read must stop the release, not pass as clean.
+    nm_out=$(nm -u -m "$bin" 2>&1) || die "nm could not inspect ${bin#"$app/"}: $nm_out"
+    imports=$(grep -v "weak external" <<<"$nm_out" || true)
+    for sym in "${runtime_only[@]}"; do
+      [[ $'\n'"$imports"$'\n' =~ [[:space:]]"$sym"[[:space:]] ]] && bad+=("${bin#"$app/"}: $sym")
+    done
+  done < <(find "$app" -type f -perm +111)
+  [[ ${#bad[@]} -eq 0 ]] || die "archive strongly imports macOS 27-only runtime symbols and will not launch on macOS 26:
+  ${bad[*]}
+Check Package.resolved for a stale dependency (swift-collections must be >= 1.7.1)."
+  info "No strong imports of macOS 27-only runtime symbols"
+
   local plist="$app/Contents/Info.plist" built_version built_build
   built_version=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$plist")
   built_build=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$plist")
