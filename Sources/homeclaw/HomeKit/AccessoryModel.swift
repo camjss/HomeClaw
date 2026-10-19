@@ -212,6 +212,7 @@ enum AccessoryModel {
             "action_count": actionSet.actions.count,
             "type": actionSetType(actionSet),
             "rooms": Array(rooms).sorted(),
+            "last_execution_date": isoDateOrNull(actionSet.lastExecutionDate),
         ]
     }
 
@@ -237,6 +238,14 @@ enum AccessoryModel {
 
     // MARK: - Automations (Triggers)
 
+    /// ISO-8601 UTC for a HomeKit timestamp, or JSON null when HomeKit recorded
+    /// none. Null means "none recorded", not "never ran": HomeKit leaves
+    /// `lastExecutionDate` unset for most runs, including hub-run automations (#152).
+    static func isoDateOrNull(_ date: Date?) -> Any {
+        guard let date else { return NSNull() }
+        return ISO8601DateFormatter().string(from: date)
+    }
+
     /// Uniform scene (action set) references for a trigger, shared by list and get
     /// so both surfaces emit the same representation (issue #76): `id` + `name` +
     /// `action_count`, plus `hidden: true` for trigger-owned action sets that the
@@ -249,6 +258,7 @@ enum AccessoryModel {
                 "id": actionSet.uniqueIdentifier.uuidString,
                 "name": actionSet.name,
                 "action_count": actionSet.actions.count,
+                "last_execution_date": isoDateOrNull(actionSet.lastExecutionDate),
             ]
             if let visibleIDs, !visibleIDs.contains(actionSet.uniqueIdentifier) {
                 dict["hidden"] = true

@@ -126,6 +126,7 @@ enum DemoFixtures {
                 "action_count": scene.actionCount,
                 "type": "user_defined",
                 "rooms": scene.rooms,
+                "last_execution_date": NSNull(),
             ]
         }
 
@@ -795,6 +796,7 @@ enum DemoFixtures {
                 "actions": [],
                 "type": "user_defined",
                 "rooms": rooms,
+                "last_execution_date": NSNull(),
             ]
         }
     }
@@ -852,7 +854,9 @@ enum DemoFixtures {
         @MainActor
         private func actionSetSummaries() -> [[String: Any]] {
             attachedSceneNames.map { sceneName in
-                var dict: [String: Any] = ["name": sceneName, "action_count": inlineActions ? actions.count : 1]
+                var dict: [String: Any] = [
+                    "name": sceneName, "action_count": inlineActions ? actions.count : 1, "last_execution_date": NSNull(),
+                ]
                 if let scene = DemoFixtures.scenes.first(where: { $0.name == sceneName }) {
                     dict["id"] = scene.id
                 }
@@ -1000,6 +1004,7 @@ enum DemoFixtures {
                 "action_count": scene.actionCount,
                 "type": "user_defined",
                 "rooms": scene.rooms,
+                "last_execution_date": NSNull(),
             ]
         }
     }
