@@ -157,6 +157,22 @@ homeclaw-cli automations create --name "Dining Unoccupied" \
   --action-json '{"accessory":"<uuid>","property":"power","value":"false","service_index":2}' --dry-run
 homeclaw-cli automations add-condition "<automation>" --accessory "<uuid>" --property power --value true --service-index 2
 
+# Replacing an accessory across automations (plan only; never writes without --apply)
+homeclaw-cli automations migrate-actions --replace-accessory "<old-uuid>=<new-uuid>[,<new-uuid>]" --json
+homeclaw-cli automations migrate-actions --replace-accessory "<old-uuid>=<new-uuid>" --automation "<uuid>" --json
+# Each action set comes back with classification + status:
+#   visible_scene + supported   -> can be written with --apply (ask the user first;
+#                                  shared_with lists other automations it also changes)
+#   visible_scene + blocked     -> see issues (missing, ambiguous service, conflict)
+#   hidden + unsupported        -> reason hidden_action_set_requires_private_spi.
+#                                  Apple only lets its own Home app edit automation-owned
+#                                  action sets. Do NOT work around it (no import-scene +
+#                                  rewire substitute). Render manual_steps as Home app
+#                                  instructions instead, then rerun the dry run to confirm.
+#   trigger_only: true          -> the old accessory is this automation's trigger;
+#                                  nothing to migrate, but tell the user it will break
+# Never claim a hidden set was migrated. See docs/PRIVATE_API.md for the boundary.
+
 # Export to file (any format)
 homeclaw-cli device-map --format agent -o memory/homekit-device-map.json
 homeclaw-cli device-map --format md -o device-map.md
