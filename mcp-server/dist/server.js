@@ -17337,7 +17337,7 @@ var tools = [
   },
   {
     name: "homekit_events",
-    description: "Get recent HomeKit events \u2014 characteristic changes, scene triggers, and accessory control actions. Use to understand what happened recently in the home.",
+    description: "Get recent HomeKit events \u2014 characteristic changes, accessory reachability changes, scene triggers, and accessory control actions. Use to understand what happened recently in the home, including when an accessory became unreachable.",
     inputSchema: {
       type: "object",
       properties: {
@@ -17351,7 +17351,7 @@ var tools = [
         },
         type: {
           type: "string",
-          enum: ["characteristic_change", "homes_updated", "scene_triggered", "accessory_controlled"],
+          enum: ["characteristic_change", "homes_updated", "scene_triggered", "accessory_controlled", "reachability_change"],
           description: "Filter by event type"
         }
       }
